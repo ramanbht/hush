@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hush settings</title>
+  <link rel="icon" href="../icons/icon32.png">
+  <link rel="stylesheet" href="../ui/base.css">
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main>
+    <header class="top">
+      <img src="../icons/icon48.png" width="40" height="40" alt="">
+      <div>
+        <h1>Hush settings</h1>
+        <p class="muted" id="built">&nbsp;</p>
+      </div>
+    </header>
+
+    <section aria-labelledby="h-lists">
+      <h2 id="h-lists">Filter lists</h2>
+      <p class="muted">Lists decide which requests are blocked. Turning one off takes effect immediately.</p>
+      <ul class="rows" id="lists"></ul>
+      <p class="muted" id="budget"></p>
+    </section>
+
+    <section aria-labelledby="h-behavior">
+      <h2 id="h-behavior">Page cleanup</h2>
+      <ul class="rows">
+        <li class="row">
+          <div>
+            <div class="row-title" id="l-cosmetic">Hide ad elements</div>
+            <div class="muted">Removes the empty boxes and banners that blocked ads leave behind.</div>
+          </div>
+          <button class="switch" role="switch" aria-labelledby="l-cosmetic" data-setting="cosmetic"></button>
+        </li>
+        <li class="row">
+          <div>
+            <div class="row-title" id="l-scriptlets">Patch anti-adblock and in-page ads</div>
+            <div class="muted">Runs small fixes from the uBlock lists on sites that need them, such as YouTube.</div>
+          </div>
+          <button class="switch" role="switch" aria-labelledby="l-scriptlets" data-setting="scriptlets"></button>
+        </li>
+      </ul>
+      <p class="muted">These apply to pages you open or reload after changing them.</p>
+    </section>
+
+    <section aria-labelledby="h-paused">
+      <h2 id="h-paused">Paused sites</h2>
+      <ul class="rows" id="paused"></ul>
+    </section>
+
+    <section aria-labelledby="h-filters">
+      <h2 id="h-filters">My filters</h2>
+      <p class="muted">One rule per line, in Adblock Plus syntax. Elements you hide with the picker are added here.</p>
+      <pre class="examples">||annoying-widget.example^          block a domain
+@@||cdn.example.com/player.js       allow something a list blocks
+news.example##.subscribe-banner     hide an element on one site
+##.cookie-wall                      hide an element everywhere</pre>
+      <textarea id="filters" spellcheck="false" autocomplete="off" aria-label="My filters"></textarea>
+      <div class="actions">
+        <button class="button primary" id="save">Save filters</button>
+        <span id="save-status" class="muted" role="status"></span>
+      </div>
+      <ul id="rejected" class="rejected"></ul>
+    </section>
+
+    <section aria-labelledby="h-about">
+      <h2 id="h-about">Sources</h2>
+      <p class="muted">Rules come from these community lists. Each is used under its own license.</p>
+      <ul class="sources" id="sources"></ul>
+    </section>
+  </main>
+  <script src="options.js"></script>
+</body>
+</html>

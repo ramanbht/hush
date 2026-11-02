@@ -1,0 +1,44 @@
+# Rebuilds the extension with fresh filter lists every week (and on every
+# push), then publishes hush-chrome.zip and hush-safari.zip as the latest
+# release. Download link that always points at the newest build:
+#   https://github.com/<owner>/<repo>/releases/latest
+name: Build
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 13 * * 1' # Mondays 13:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Unit tests
+        run: node --test test/unit.test.mjs
+      - name: Build (downloads fresh lists)
+        run: node tools/build.mjs --refresh
+      - name: Package
+        run: |
+          (cd dist/chrome && zip -qr ../../hush-chrome.zip .)
+          (cd dist/safari && zip -qr ../../hush-safari.zip .)
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="build-$(date -u +%Y%m%d-%H%M)"
+          version=$(node -p "require('./dist/chrome/manifest.json').version")
+          gh release create "$tag" hush-chrome.zip hush-safari.zip dist/report-chrome.json dist/report-safari.json \
+            --latest --title "Hush $version" \
+            --notes "Built $(date -u '+%Y-%m-%d %H:%M UTC') with the current filter lists. See the README for install steps."
+          # Keep the 5 newest builds.
+          gh release list --limit 100 --json tagName --jq '.[].tagName' | grep '^build-' | tail -n +6 |
+            xargs -r -I{} gh release delete {} --yes --cleanup-tag

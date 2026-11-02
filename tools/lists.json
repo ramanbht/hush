@@ -1,0 +1,81 @@
+[
+  {
+    "id": "easylist",
+    "name": "EasyList",
+    "about": "The main ad list most blockers use",
+    "format": "abp",
+    "urls": [
+      "https://easylist.to/easylist/easylist.txt",
+      "https://raw.githubusercontent.com/easylist/easylist/gh-pages/easylist.txt"
+    ],
+    "license": "GPL-3.0 or CC BY-SA 3.0",
+    "homepage": "https://easylist.to/",
+    "enabled": { "chrome": true, "safari": true }
+  },
+  {
+    "id": "easyprivacy",
+    "name": "EasyPrivacy",
+    "about": "Trackers and analytics",
+    "format": "abp",
+    "urls": [
+      "https://easylist.to/easylist/easyprivacy.txt",
+      "https://raw.githubusercontent.com/easylist/easylist/gh-pages/easyprivacy.txt"
+    ],
+    "license": "GPL-3.0 or CC BY-SA 3.0",
+    "homepage": "https://easylist.to/",
+    "enabled": { "chrome": true, "safari": false }
+  },
+  {
+    "id": "ubo-filters",
+    "name": "uBlock filters: Ads",
+    "about": "Extra ad rules and anti-adblock fixes from the uBlock Origin team",
+    "format": "abp",
+    "urls": ["https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt"],
+    "license": "GPL-3.0",
+    "homepage": "https://github.com/uBlockOrigin/uAssets",
+    "enabled": { "chrome": true, "safari": true }
+  },
+  {
+    "id": "ubo-quick-fixes",
+    "name": "uBlock filters: Quick fixes",
+    "about": "Fast-moving fixes (YouTube and similar)",
+    "format": "abp",
+    "urls": ["https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/quick-fixes.txt"],
+    "license": "GPL-3.0",
+    "homepage": "https://github.com/uBlockOrigin/uAssets",
+    "enabled": { "chrome": true, "safari": true }
+  },
+  {
+    "id": "ubo-unbreak",
+    "name": "uBlock filters: Unbreak",
+    "about": "Exceptions that undo known breakage caused by the other lists",
+    "format": "abp",
+    "urls": ["https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/unbreak.txt"],
+    "license": "GPL-3.0",
+    "homepage": "https://github.com/uBlockOrigin/uAssets",
+    "enabled": { "chrome": true, "safari": true }
+  },
+  {
+    "id": "ubo-privacy",
+    "name": "uBlock filters: Privacy",
+    "about": "Additional tracker rules",
+    "format": "abp",
+    "urls": ["https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/privacy.txt"],
+    "license": "GPL-3.0",
+    "homepage": "https://github.com/uBlockOrigin/uAssets",
+    "enabled": { "chrome": true, "safari": false }
+  },
+  {
+    "id": "pgl",
+    "name": "Peter Lowe's ad and tracking server list",
+    "about": "Hostnames of ad and tracking servers",
+    "format": "hosts",
+    "urls": [
+      "https://pgl.yoyo.org/adservers/serverlist.php?hostformat=hosts&showintro=1&mimetype=plaintext",
+      "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/thirdparties/pgl.yoyo.org/as/serverlist"
+    ],
+    "license": "See homepage",
+    "homepage": "https://pgl.yoyo.org/adservers/",
+    "enabled": { "chrome": true, "safari": true }
+  }
+]
