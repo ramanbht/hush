@@ -40,7 +40,7 @@ Quick test, no Xcode needed (if your Safari's Developer settings offer it):
 2. Safari > Settings > Developer > **Add Temporary Extension…** and pick the unzipped
    folder (or `dist/safari`). Safari removes temporary extensions after 24 hours or when it quits.
 
-Installed app (needs macOS, Xcode and Node 18+). Clone the repo, then:
+Installed app (needs macOS and Xcode; Node 18+ to refresh the lists). Clone the repo, then:
 
 ```sh
 tools/safari.sh                                              # unsigned

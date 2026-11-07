@@ -20,7 +20,14 @@ BUNDLE_ID=${BUNDLE_ID:-local.hush.adblocker}
 OUT=safari-app
 DEST="$HOME/Applications/Hush.app"
 
-node tools/build.mjs --target=safari
+if command -v node >/dev/null 2>&1; then
+  node tools/build.mjs --target=safari
+elif [ -f dist/safari/manifest.json ]; then
+  echo "Node not found: packaging the existing dist/safari (install Node to refresh the lists)"
+else
+  echo "Node 18+ is needed to build the extension (brew install node, or nodejs.org)." >&2
+  exit 1
+fi
 
 # Apple renamed safari-web-extension-converter to safari-web-extension-packager.
 PACKAGER=safari-web-extension-packager
