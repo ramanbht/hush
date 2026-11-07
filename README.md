@@ -40,17 +40,26 @@ Quick test, no Xcode needed (if your Safari's Developer settings offer it):
 2. Safari > Settings > Developer > **Add Temporary Extension…** and pick the unzipped
    folder (or `dist/safari`). Safari removes temporary extensions after 24 hours or when it quits.
 
-Longer-lived install (needs Xcode):
+Installed app (needs macOS, Xcode and Node 18+). Clone the repo, then:
 
 ```sh
-tools/safari.sh          # builds dist/safari if needed, converts it into a macOS app, opens it
+tools/safari.sh                                              # unsigned
+TEAM_ID=ABCDE12345 BUNDLE_ID=io.github.you.hush tools/safari.sh   # signed, permanent
 ```
 
-Then in Safari: Settings > Developer > **Allow unsigned extensions** (this resets every
-time Safari quits unless the app is signed with an Apple Developer Program identity),
-enable Hush under Settings > Extensions, and choose **Always Allow on Every Website**.
-Without website access Safari still blocks requests, but element hiding and script
-patches cannot run.
+The script builds with fresh lists, packages Hush as a macOS app, installs it in
+`~/Applications`, and opens it. Then enable Hush under Safari > Settings > Extensions and
+choose **Always Allow on Every Website**. Without website access Safari still blocks
+requests, but element hiding and script patches cannot run.
+
+- **Unsigned:** Safari only loads it while Settings > Developer > **Allow unsigned
+  extensions** is checked, and Safari clears that box every time it quits.
+- **Signed (permanent):** needs an Apple Developer Program membership ($99/year). Sign in
+  to that Apple ID in Xcode > Settings > Accounts, and pass your team ID (shown at
+  developer.apple.com/account under Membership details). Safari then keeps Hush enabled
+  across restarts with no developer settings.
+
+Run the same command again to update.
 
 ## Updating the lists
 
