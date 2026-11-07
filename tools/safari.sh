@@ -17,6 +17,21 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 BUNDLE_ID=${BUNDLE_ID:-local.hush.adblocker}
+
+# Use full Xcode even if xcode-select points at the command-line tools.
+if ! xcrun --find xcodebuild >/dev/null 2>&1 || [[ "$(xcode-select -p 2>/dev/null)" == *CommandLineTools* ]]; then
+  XCODE_APP=$(ls -d /Applications/Xcode*.app 2>/dev/null | head -1 || true)
+  if [ -z "$XCODE_APP" ]; then
+    echo "Xcode is not installed. Get it free from the Mac App Store, open it once, then run this again." >&2
+    exit 1
+  fi
+  export DEVELOPER_DIR="$XCODE_APP/Contents/Developer"
+  echo "Using $XCODE_APP"
+fi
+if ! xcodebuild -checkFirstLaunchStatus >/dev/null 2>&1; then
+  echo "Xcode needs one-time setup. Run: sudo xcodebuild -runFirstLaunch   (then run this script again)" >&2
+  exit 1
+fi
 OUT=safari-app
 DEST="$HOME/Applications/Hush.app"
 
