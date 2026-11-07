@@ -158,6 +158,33 @@ test('user filters compile to dynamic rules with user priorities', () => {
   assert.equal(out.rejected.length, 1);
 });
 
+test('entity domains (amazon.*) in hiding rules', () => {
+  const keys = (h) => new Set(A.lookupKeys(h));
+  for (const h of ['www.amazon.com', 'amazon.co.uk', 'smile.amazon.de', 'www.amazon.com.au', 'amazon.co.jp']) {
+    assert.ok(keys(h).has('amazon.*'), h);
+  }
+  assert.ok(keys('www.google.co.in').has('www.google.*'));
+  assert.ok(!keys('amazon.github.io').has('amazon.*'));
+  assert.ok(!keys('notamazon.com').has('amazon.*'));
+
+  const store = A.newCosmeticStore();
+  for (const line of ['amazon.*##.s-result-item:has(.puis-sponsored-label-text)', 'amazon.*,~amazon.de##.x',
+    'amazon.*#@#.ad-banner', '##.ad-banner', 'amazon.*##+js(set, a, 1)']) {
+    const p = A.parseLine(line, 'abp');
+    if (p.kind !== 'skip') A.addCosmetic(store, p);
+    else assert.equal(p.reason, 'scriptlet-entity-domain');
+  }
+  const out = A.finalizeCosmetic(store);
+  assert.deepEqual(out.specific.hide['amazon.*'].map((i) => out.specific.sels[i]),
+    ['.s-result-item:has(.puis-sponsored-label-text)', '.x']);
+  assert.deepEqual(out.specific.negate['amazon.de'], ['.x']);
+  assert.ok(out.specific.genericExcluded.includes('amazon.*'));
+  assert.deepEqual(out.scriptlets.hosts, {});
+  assert.ok(A.matchPatternsFor('amazon.*').includes('*://*.amazon.co.uk/*'));
+  assert.deepEqual(A.matchPatternsFor('example.com'), ['*://*.example.com/*']);
+  assert.equal(A.parseLine('||x.com^$domain=amazon.*', 'abp').kind, 'skip'); // network: still unsupported
+});
+
 test('selector safety', () => {
   assert.ok(A.isSafeSelector('a[href*="/ads/"]'));
   assert.ok(A.isSafeSelector('div:not(.a, .b) > span'));

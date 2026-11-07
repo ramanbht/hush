@@ -87,7 +87,7 @@ async function cssForHost(host) {
   if (cssCache.has(host)) return cssCache.get(host);
   const S = await state();
   const user = S.userCompiled || { css: {}, unhide: {} };
-  const suffixes = A.hostSuffixes(host);
+  const suffixes = A.lookupKeys(host); // host, parent domains, and entity forms (amazon.*)
   const parts = [];
 
   const unhide = new Set();
@@ -154,7 +154,7 @@ async function applyCosmetic(sender, host) {
 // ------------------------------------------------- content-script setup
 
 function excludeFor(hosts) {
-  return [...new Set(hosts)].map(A.hostToMatchPattern);
+  return [...new Set([...new Set(hosts)].flatMap(A.matchPatternsFor))];
 }
 
 async function registerOne(def, S) {

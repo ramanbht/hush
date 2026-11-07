@@ -110,6 +110,13 @@ const handler = (req, res) => {
       x.send();
     </script>`);
   }
+  if (host === 'www.amazon.com' || host === 'www.amazon.co.uk') {
+    // Search results as Amazon marks them up; the lists hide sponsored ones
+    // with "amazon.*" rules, which must work on every Amazon domain.
+    return send('text/html', `<!doctype html><div class="s-main-slot">
+      <div class="s-result-item" id="sponsored"><div><span class="puis-sponsored-label-text">Sponsored</span></div><h2>Pods</h2></div>
+      <div class="s-result-item" id="organic"><h2>Nespresso Variety Pack</h2></div></div>`);
+  }
   if (host === 'timesofindia.com') {
     return send('text/html', `<!doctype html><script>
       try { window.detector; window.r = 'not aborted'; } catch (e) { window.r = 'aborted'; }
@@ -217,6 +224,12 @@ try {
   await page.goto(`http://${exceptionHost}/`, { waitUntil: 'load' });
   check(`generic rule still applies on a site with exceptions (${otherGenericSel})`, !!await poll(() => hidden(page, 'other')));
   check(`list exception honored on ${exceptionHost} (${exceptedSel} stays visible)`, !await hidden(page, 'excepted'));
+
+  for (const amazon of ['www.amazon.com', 'www.amazon.co.uk']) {
+    await page.goto(`http://${amazon}/s?k=pods`, { waitUntil: 'load' });
+    check(`entity rule amazon.* hides sponsored results on ${amazon}`, !!await poll(() => hidden(page, 'sponsored')));
+    check(`organic results stay visible on ${amazon}`, !await hidden(page, 'organic'));
+  }
 
   // Scriptlets
   await page.goto('http://www.youtube.com/', { waitUntil: 'load' });

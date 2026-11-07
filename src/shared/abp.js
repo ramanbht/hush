@@ -131,7 +131,13 @@
     return out;
   }
 
-  function parseDomainList(str, sep) {
+  // Entities ("amazon.*") mean the site under any public suffix. Network rules
+  // cannot express them (DNR has no TLD wildcard); cosmetic rules can, because
+  // hosts are matched at runtime (see entityKeys).
+  const ENTITY_RE = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)*\.\*$/;
+  function isEntity(h) { return h.endsWith('.*'); }
+
+  function parseDomainList(str, sep, allowEntities = false) {
     const include = [], exclude = [];
     let skippedInclude = 0;
     for (let d of str.split(sep)) {
@@ -139,12 +145,50 @@
       if (!d) continue;
       const neg = d.startsWith('~');
       if (neg) d = d.slice(1);
-      // Entities (example.*), regex domains and wildcards cannot be expressed.
-      const h = (d.includes('*') || d.startsWith('/')) ? null : normalizeHost(d);
+      let h = null;
+      if (allowEntities && ENTITY_RE.test(d.toLowerCase())) h = d.toLowerCase();
+      else if (!d.includes('*') && !d.startsWith('/')) h = normalizeHost(d); // regex domains: unsupported
       if (!h) { if (!neg) skippedInclude++; continue; }
       (neg ? exclude : include).push(h);
     }
     return { include, exclude, skippedInclude };
+  }
+
+  // Entity keys a hostname can match, by treating its last one or two labels
+  // as the public suffix: www.amazon.co.uk -> amazon.co.*, amazon.*, www.amazon.*.
+  // A two-label suffix needs a short second-level label (co, com, org, ne...),
+  // which covers the common country forms without bundling the public suffix list.
+  function entityKeys(host) {
+    const out = [];
+    const labels = host.split('.');
+    for (let i = 0; i < labels.length - 1; i++) {
+      out.push(labels.slice(i, -1).join('.') + '.*');
+      if (labels.length - i >= 3 && labels[labels.length - 2].length <= 3) {
+        out.push(labels.slice(i, -2).join('.') + '.*');
+      }
+    }
+    return out;
+  }
+
+  // Every key a hostname's rules may be stored under.
+  function lookupKeys(host) {
+    return hostSuffixes(host).concat(entityKeys(host));
+  }
+
+  // Common public suffixes, used only to turn an entity into match patterns
+  // for content-script exclusions.
+  const ENTITY_SUFFIXES = ['com', 'net', 'org', 'io', 'co', 'us', 'ca', 'mx', 'br', 'ar', 'cl', 'uk', 'ie',
+    'de', 'at', 'ch', 'fr', 'be', 'nl', 'lu', 'it', 'es', 'pt', 'se', 'no', 'dk', 'fi', 'pl', 'cz', 'sk', 'hu',
+    'ro', 'gr', 'tr', 'ru', 'ua', 'in', 'jp', 'cn', 'kr', 'tw', 'hk', 'sg', 'my', 'th', 'vn', 'id', 'ph', 'au',
+    'nz', 'za', 'eg', 'ae', 'sa', 'il', 'eu', 'info', 'tv', 'me', 'cc', 'to', 'ws', 'xyz', 'biz', 'site',
+    'co.uk', 'co.jp', 'co.in', 'co.nz', 'co.za', 'co.kr', 'com.au', 'com.br', 'com.mx', 'com.tr', 'com.sg',
+    'com.ar', 'com.be', 'com.cn', 'com.hk', 'com.tw', 'com.my', 'com.eg', 'com.sa'];
+
+  // Match patterns for a host and its subdomains (an entity expands to many).
+  function matchPatternsFor(h) {
+    if (!isEntity(h)) return [hostToMatchPattern(h)];
+    const base = h.slice(0, -2);
+    return ENTITY_SUFFIXES.map((s) => `*://*.${base}.${s}/*`);
   }
 
   // ---------------------------------------------------------- preprocessor
@@ -299,11 +343,17 @@
 
   function parseCosmetic(prefix, sep, body) {
     const exception = sep.includes('@');
-    const domains = parseDomainList(prefix, ',');
-    if (domains.skippedInclude && !domains.include.length) return skip('cosmetic-entity-domain');
+    const domains = parseDomainList(prefix, ',', true);
+    if (domains.skippedInclude && !domains.include.length) return skip('cosmetic-bad-domain');
     body = body.trim();
     if (sep === '##' || sep === '#@#') {
       if (body.startsWith('+js(') && body.endsWith(')')) {
+        // Scriptlets are registered per host with match patterns, which cannot
+        // express "any suffix", so entity domains stay unsupported for them.
+        const hadInclude = domains.include.length > 0;
+        domains.include = domains.include.filter((h) => !isEntity(h));
+        domains.exclude = domains.exclude.filter((h) => !isEntity(h));
+        if (hadInclude && !domains.include.length) return skip('scriptlet-entity-domain');
         const inner = body.slice(4, -1).trim();
         if (!inner) return { kind: 'scriptlet', exception, domains, call: null };
         const args = splitScriptletArgs(inner);
@@ -835,6 +885,7 @@
   return {
     PRIORITY, ALLOW_ID_BASE, SCRIPTLETS, REDIRECTS,
     normalizeHost, isIPv4, hostToMatchPattern, hostSuffixes, parseDomainList,
+    isEntity, entityKeys, lookupKeys, matchPatternsFor,
     evalCondition, preprocess, parseLine, parseNetwork, parseCosmetic, processSelector,
     splitScriptletArgs, canonicalScriptlet, isSafeSelector, sanitizeStyle,
     toDNR, assembleRules, adaptRuleForSafari, safariRuleCost, pruneSubdomains, regexCost,

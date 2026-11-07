@@ -8,7 +8,8 @@ blocking format.
 What it does on every site:
 
 - **Blocks ad and tracker requests** before they leave the browser (~112,000 network filters compiled into ~16,300 browser rules).
-- **Hides leftover ad boxes** with 13,700 generic CSS rules plus 11,000 site-specific ones across 8,500 sites.
+- **Hides leftover ad boxes** with 13,700 generic CSS rules plus 11,450 site-specific ones across 8,800 sites
+  (including `amazon.*`-style rules that cover a site on every country domain).
 - **Patches page scripts** on ~2,650 sites where ads or anti-adblock live inside the page itself (YouTube player responses, adblock detectors).
 - **Pause per site**, an **element picker**, and a **My filters** box for your own rules.
 
@@ -110,8 +111,9 @@ No browser extension blocks everything; these are the known gaps:
   where ads are still described in JSON; that is an arms race, so rebuild often.
 - **Pop-unders and popups** (`$popup`, about 3,000 EasyList filters). Manifest V3 has no way
   to cancel a new window, though the `no-window-open-if` scriptlet covers many sites.
-- **Procedural hiding** (`:has-text()`, `:xpath()`, about 400 filters) and **entity rules**
-  (`example.*`, about 1,200, mostly piracy sites).
+- **Procedural hiding** (`:has-text()`, `:xpath()`, about 400 filters), and `example.*`
+  rules for script patches and network blocking (about 600, mostly piracy sites). Hiding
+  rules written that way are supported.
 - **Header rewriting** (`$csp`, `$removeparam`): skipped to keep the Safari build safe.
 - **Ads inside apps** or other browsers. For whole-device coverage, pair this with a DNS
   blocker (NextDNS, Pi-hole); those miss first-party ads and page cleanup, which this covers.
@@ -124,9 +126,9 @@ npm install              # once, for the end-to-end test
 npm run test:e2e         # loads dist/chrome into headless Chrome for Testing
 ```
 
-The end-to-end test maps every hostname to a local server, then checks 26 behaviors: rules
+The end-to-end test maps every hostname to a local server, then checks 30 behaviors: rules
 indexed, ad and tracker requests never reaching the server, stand-in scripts, generic and
-site-specific hiding, list exceptions, YouTube-style JSON and XHR rewriting, anti-adblock
+site-specific hiding (including Amazon sponsored results), list exceptions, YouTube-style JSON and XHR rewriting, anti-adblock
 aborts, My filters, pause and resume, and the element picker. It needs Chrome for Testing or
 Chromium (`npx @puppeteer/browsers install chrome@stable`, then set `CHROME=` to its path),
 because branded Chrome ignores `--load-extension`. It binds ports 80 and 443.
