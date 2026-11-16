@@ -40,26 +40,67 @@ Quick test, no Xcode needed (if your Safari's Developer settings offer it):
 2. Safari > Settings > Developer > **Add Temporary Extension…** and pick the unzipped
    folder (or `dist/safari`). Safari removes temporary extensions after 24 hours or when it quits.
 
-Installed app (needs macOS and Xcode; Node 18+ to refresh the lists). Clone the repo, then:
+Installed app, which Safari keeps across restarts, so there is no daily reinstall. A free
+Apple ID is enough; the paid Developer Program is only needed to give the app to other
+people. One-time setup:
+
+1. **Install full Xcode.** The Command Line Tools alone have no `xcodebuild` and no
+   web-extension packager. The Mac App Store only offers the newest Xcode, which may need a
+   newer macOS than yours; if it refuses, get a version that matches your Mac with
+   [Xcodes.app](https://github.com/XcodesOrg/XcodesApp) (`brew install --cask xcodes-app`)
+   or from developer.apple.com/download/all.
+2. **Run Xcode's first-launch setup** and accept the license (page through it and type
+   `agree`). If `xcode-select -p` still points at the Command Line Tools, name your Xcode
+   explicitly, adjusting the path to match its name (e.g. `Xcode-26.6.0.app`):
+
+   ```sh
+   sudo DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -runFirstLaunch
+   ```
+
+   `tools/safari.sh` prints this line with your own Xcode's path if the setup is missing.
+3. **Get a signing certificate.** In Xcode > Settings > Accounts, click **+**, choose Apple
+   ID, sign in, and select your **Personal Team**. If no certificate appears, click
+   **Manage Certificates… > + > Apple Development**.
+4. **Check that macOS trusts it:**
+
+   ```sh
+   security find-identity -v -p codesigning
+   ```
+
+   You want `1 valid identities found`. If it says 0 right after you made a certificate,
+   the Apple intermediate certificate that issued it is missing, which is common on a Mac
+   new to Xcode. `tools/safari.sh` detects this and prints the exact file for your
+   certificate; for the usual one:
+
+   ```sh
+   curl -fsSLO https://www.apple.com/certificateauthority/AppleWWDRCAG3.cer
+   security import AppleWWDRCAG3.cer -k ~/Library/Keychains/login.keychain-db
+   ```
+
+   It is an intermediate, not a root: it adds no new trust, it only completes the chain to
+   Apple's root, which macOS already trusts.
+
+Then build and install:
 
 ```sh
-tools/safari.sh                                              # unsigned
-TEAM_ID=ABCDE12345 BUNDLE_ID=io.github.you.hush tools/safari.sh   # signed, permanent
+tools/safari.sh
 ```
 
-The script builds with fresh lists, packages Hush as a macOS app, installs it in
-`~/Applications`, and opens it. Then enable Hush under Safari > Settings > Extensions and
-choose **Always Allow on Every Website**. Without website access Safari still blocks
-requests, but element hiding and script patches cannot run.
+The script builds with fresh lists, signs with the certificate it finds in your keychain,
+installs Hush in `~/Applications`, verifies the signature, and makes sure that is the only
+copy macOS has registered (otherwise Safari can list Hush twice and load the wrong copy).
+Finally, in Safari > Settings > Extensions, enable Hush and choose **Always Allow on Every
+Website**. Without website access Safari still blocks requests, but element hiding and
+script patches cannot run.
 
-- **Unsigned:** Safari only loads it while Settings > Developer > **Allow unsigned
-  extensions** is checked, and Safari clears that box every time it quits.
-- **Signed (permanent):** needs an Apple Developer Program membership ($99/year). Sign in
-  to that Apple ID in Xcode > Settings > Accounts, and pass your team ID (shown at
-  developer.apple.com/account under Membership details). Safari then keeps Hush enabled
-  across restarts with no developer settings.
+Run `tools/safari.sh` again to update the lists; the setup above stays done. The
+certificate lasts a year, and when it expires the script says so (step 3's **Manage
+Certificates** makes a new one).
 
-Run the same command again to update.
+`HUSH_UNSIGNED=1 tools/safari.sh` builds without signing. Safari then loads it only while
+Settings > Developer > **Allow unsigned extensions** is ticked, which it clears every time it
+quits. `TEAM_ID=` picks a team if your keychain has several, and `BUNDLE_ID=` overrides the
+identifier (keep it stable, or Safari treats the result as a new extension).
 
 ## Updating the lists
 
